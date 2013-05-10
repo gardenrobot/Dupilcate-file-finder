@@ -1,4 +1,4 @@
 Dupilcate-file-finder
 =====================
 
-Small program that search a directory for duplicate files
+Small program that searches a directory for duplicate files
