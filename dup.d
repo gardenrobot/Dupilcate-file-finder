@@ -14,7 +14,7 @@ int main(string[] args)
 {
     if(args.length != 2)
     {
-        stderr.writefln("Needs 1 argument");
+        stderr.writefln("Usage: dup [directory to search]");
         return 1;
     }
 
