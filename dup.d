@@ -7,8 +7,62 @@ import std.path;
 import std.container;
 import std.digest.md;
 
+version(linux)
+{
+    import core.sys.posix.sys.stat;
+
+    /**
+     * Returns the type of a file
+     */
+    FileType getFileType(string fileName)
+    {
+        // convert the d-string into a c-string
+        char[] fileNameC = new char[256];
+        int i;
+        for(i = 0; i < fileName.length; ++i)
+        {
+            fileNameC[i] = fileName[i];
+        }
+        fileNameC[i] = '\0';
+
+        // get info from os
+        stat_t result;
+        lstat(&(fileNameC[0]), &result);
+
+        // figure out what the result means
+        if(S_ISDIR(result.st_mode))
+        {
+            return FileType.DIRECTORY;
+        }
+        else if(S_ISLNK(result.st_mode))
+        {
+            return FileType.SYM_LINK;
+        }
+        else if(S_ISREG(result.st_mode))
+        {
+            return FileType.REG_FILE;
+        }
+        else
+        {
+            return FileType.OTHER;
+        }
+    }
+}
+else
+{
+    // To be implemented in windows later. For now, just say it is a regular
+    // file.
+    FileType getFileType(string fileName)
+    {
+        return FileType.REG_FILE;
+    }
+}
+
 alias DList!(string) FileMatches;
 alias char[16] Hash;
+
+enum FileType {REG_FILE, SYM_LINK, DIRECTORY, OTHER}
+
 
 int main(string[] args)
 {
@@ -29,10 +83,15 @@ int main(string[] args)
     int fileCount = 0;
     foreach(string entry; dirEntries(rootAbs, SpanMode.breadth, false))
     {
-        if(isFile(entry))
+        if(getFileType(entry) == FileType.REG_FILE)
         {
+            debug writefln("Hashing %s", entry);
             addFile(map, entry);
             fileCount++;
+        }
+        else
+        {
+            writefln("Ignoring %s", entry);
         }
     }
     writefln("Found %d files", fileCount);
